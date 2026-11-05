@@ -1,0 +1,60 @@
+pipeline {
+    agent none
+
+    stages {
+        stage('Build') {
+            agent {
+                label 'build-agent'
+            }
+            steps {
+                echo 'Building application'
+                checkout scm
+
+                sh '''
+                    test -f index.html
+                    echo "Application file found"
+                '''
+
+                stash name: 'application',
+                      includes: 'index.html'
+            }
+        }
+
+        stage('Test') {
+            agent {
+                label 'build-agent'
+            }
+            steps {
+                unstash 'application'
+
+                sh '''
+                    grep -q "Welcome to My CI/CD Project" index.html
+                    echo "Application test passed"
+                '''
+            }
+        }
+
+        stage('Deploy') {
+            agent {
+                label 'deploy-agent'
+            }
+            steps {
+                unstash 'application'
+
+                sh '''
+                    cp index.html /var/www/html/index.html
+                    echo "Deployment successful"
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'CI/CD Pipeline SUCCESS!'
+        }
+        failure {
+            echo 'CI/CD Pipeline FAILED!'
+        }
+    }
+}
