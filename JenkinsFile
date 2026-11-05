@@ -12,22 +12,20 @@ pipeline {
                 label 'build-agent'
             }
 
-            options {
-                retries(2)
-            }
-
             steps {
-                echo 'Building application'
+                retry(2) {
+                    echo 'Building application'
 
-                checkout scm
+                    checkout scm
 
-                sh '''
-                    test -f index.html
-                    echo "Application file found"
-                '''
+                    sh '''
+                        test -f index.html
+                        echo "Application file found"
+                    '''
 
-                stash name: 'application',
-                      includes: 'index.html'
+                    stash name: 'application',
+                          includes: 'index.html'
+                }
             }
         }
 
@@ -36,17 +34,15 @@ pipeline {
                 label 'build-agent'
             }
 
-            options {
-                retries(2)
-            }
-
             steps {
-                unstash 'application'
+                retry(2) {
+                    unstash 'application'
 
-                sh '''
-                    grep -q "Welcome to My CI/CD Project" index.html
-                    echo "Application test passed"
-                '''
+                    sh '''
+                        grep -q "Welcome to My CI/CD Project" index.html
+                        echo "Application test passed"
+                    '''
+                }
             }
         }
 
@@ -55,17 +51,15 @@ pipeline {
                 label 'deploy-agent'
             }
 
-            options {
-                retries(2)
-            }
-
             steps {
-                unstash 'application'
+                retry(2) {
+                    unstash 'application'
 
-                sh '''
-                    sudo cp index.html /var/www/html/index.html
-                    echo "Deployment successful"
-                '''
+                    sh '''
+                        sudo cp index.html /var/www/html/index.html
+                        echo "Deployment successful"
+                    '''
+                }
             }
         }
     }
