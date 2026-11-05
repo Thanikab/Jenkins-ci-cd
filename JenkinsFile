@@ -1,13 +1,24 @@
 pipeline {
     agent none
 
+    options {
+        skipDefaultCheckout(true)
+        disableConcurrentBuilds()
+    }
+
     stages {
         stage('Build') {
             agent {
                 label 'build-agent'
             }
+
+            options {
+                retries(2)
+            }
+
             steps {
                 echo 'Building application'
+
                 checkout scm
 
                 sh '''
@@ -24,6 +35,11 @@ pipeline {
             agent {
                 label 'build-agent'
             }
+
+            options {
+                retries(2)
+            }
+
             steps {
                 unstash 'application'
 
@@ -38,11 +54,16 @@ pipeline {
             agent {
                 label 'deploy-agent'
             }
+
+            options {
+                retries(2)
+            }
+
             steps {
                 unstash 'application'
 
                 sh '''
-                    cp index.html /var/www/html/index.html
+                    sudo cp index.html /var/www/html/index.html
                     echo "Deployment successful"
                 '''
             }
@@ -53,6 +74,7 @@ pipeline {
         success {
             echo 'CI/CD Pipeline SUCCESS!'
         }
+
         failure {
             echo 'CI/CD Pipeline FAILED!'
         }
